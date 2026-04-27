@@ -73,7 +73,6 @@ def get_nse_pdf():
     import requests
 
     base_url = "https://www.niftyindices.com/Index_Dashboard/Index_Dashboard_"
-    headers = {"User-Agent": "Mozilla/5.0"}
 
     today = datetime.today()
 
@@ -86,25 +85,28 @@ def get_nse_pdf():
         url = f"{base_url}{month}{year}.pdf"
 
         try:
-            print("Trying NSE URL:", url)
+            print("Trying NSE:", url)
 
-            res = requests.get(url, headers=headers, timeout=25)
+            res = requests.get(
+                url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=30
+            )
 
-            if res.status_code == 200:
-                # 🔥 SAVE ANYWAY (no strict size check)
+            # 🔥 IMPORTANT FIX
+            if res.status_code == 200 and res.headers.get("Content-Type") == "application/pdf":
+
                 with open("static/nse.pdf", "wb") as f:
                     f.write(res.content)
 
-                print("NSE file saved")
-
                 return {
-                    "pdf_url": "https://index-dashboard-system.onrender.com/static/nse.pdf",
+                    "pdf_url": "https://index-dashboard-system-1.onrender.com/static/nse.pdf",
                     "month": f"{month} {year}",
                     "source": "NSE"
                 }
 
         except Exception as e:
-            print("NSE error:", e)
+            print("Error:", e)
             continue
 
     return {"error": "NSE PDF not available"}
