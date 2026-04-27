@@ -67,22 +67,44 @@ def bse():
 
 # NSE
 @app.get("/api/nse-pdf")
-def nse():
-    base = "https://www.niftyindices.com/Index_Dashboard/Index_Dashboard_"
+def get_nse_pdf():
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    import requests
+
+    base_url = "https://www.niftyindices.com/Index_Dashboard/Index_Dashboard_"
+    headers = {"User-Agent": "Mozilla/5.0"}
+
     today = datetime.today()
 
     for i in range(2):
         dt = today - relativedelta(months=i)
-        m = dt.strftime("%b").upper()
-        y = dt.strftime("%Y")
 
-        url = f"{base}{m}{y}.pdf"
+        month = dt.strftime("%b").upper()
+        year = dt.strftime("%Y")
 
-        if download_file(url, "nse.pdf"):
-            return {
-                "pdf_url": "https://index-dashboard-system.onrender.com/static/nse.pdf",
-                "month": f"{m} {y}",
-                "source": "NSE"
-            }
+        url = f"{base_url}{month}{year}.pdf"
+
+        try:
+            print("Trying NSE URL:", url)
+
+            res = requests.get(url, headers=headers, timeout=25)
+
+            if res.status_code == 200:
+                # 🔥 SAVE ANYWAY (no strict size check)
+                with open("static/nse.pdf", "wb") as f:
+                    f.write(res.content)
+
+                print("NSE file saved")
+
+                return {
+                    "pdf_url": "https://index-dashboard-system.onrender.com/static/nse.pdf",
+                    "month": f"{month} {year}",
+                    "source": "NSE"
+                }
+
+        except Exception as e:
+            print("NSE error:", e)
+            continue
 
     return {"error": "NSE PDF not available"}
