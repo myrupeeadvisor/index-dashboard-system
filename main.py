@@ -43,31 +43,40 @@ def get_bse_pdf():
 # ✅ SAFE PARSER (NO CRASH)
 def parse_pdf(pdf_bytes):
     try:
-        rows = []
-        headers = None
+        all_text = ""
 
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
             for page in pdf.pages:
-                table = page.extract_table()
+                text = page.extract_text()
+                if text:
+                    all_text += text + "\n"
 
-                if not table or len(table) < 2:
-                    continue
+        lines = all_text.split("\n")
 
-                if not headers:
-                    headers = table[0]
-                    for row in table[1:]:
-                        if len(row) == len(headers):
-                            rows.append(row)
-                else:
-                    for row in table:
-                        if len(row) == len(headers):
-                            rows.append(row)
+        cleaned_data = []
 
-        if not rows or not headers:
+        for line in lines:
+            parts = line.split()
+
+            # Basic filter (skip small/invalid rows)
+            if len(parts) > 5:
+                cleaned_data.append(parts)
+
+        if not cleaned_data:
             return pd.DataFrame()
 
-        df = pd.DataFrame(rows, columns=headers)
-        return df.fillna("")
+        # Convert into DataFrame (generic columns)
+        max_len = max(len(row) for row in cleaned_data)
+
+        for row in cleaned_data:
+            while len(row) < max_len:
+                row.append("")
+
+        columns = [f"Col_{i}" for i in range(max_len)]
+
+        df = pd.DataFrame(cleaned_data, columns=columns)
+
+        return df
 
     except Exception as e:
         print("Parsing Error:", str(e))
