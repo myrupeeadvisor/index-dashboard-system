@@ -1,37 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Index Dashboard</title>
+  <title>My Rupee Advisor | Index Dashboard</title>
 
   <style>
     body {
-      font-family: Arial;
       margin: 0;
-      background: #f5f7fa;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
     }
 
     .header {
-      background: #0d6efd;
+      background: linear-gradient(90deg, #0d6efd, #0b5ed7);
       color: white;
-      padding: 15px;
+      padding: 18px;
       text-align: center;
       font-size: 22px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 20px;
     }
 
     .tabs {
       display: flex;
       justify-content: center;
-      margin: 15px;
+      margin-bottom: 15px;
     }
 
     .tabs button {
-      padding: 10px 20px;
+      padding: 10px 25px;
       margin: 5px;
       border: none;
       cursor: pointer;
-      background: #ddd;
-      border-radius: 5px;
+      background: #e0e0e0;
+      border-radius: 30px;
       font-weight: bold;
+      transition: 0.3s;
     }
 
     .tabs button.active {
@@ -41,14 +52,38 @@
 
     .info {
       text-align: center;
-      margin: 10px;
+      margin-bottom: 10px;
       font-weight: bold;
+      color: #333;
+    }
+
+    .actions {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      padding: 8px 15px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      background: #198754;
+      color: white;
+      cursor: pointer;
     }
 
     iframe {
       width: 100%;
-      height: 80vh;
-      border: none;
+      height: 75vh;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 13px;
+      color: #777;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -56,20 +91,34 @@
 <body>
 
 <div class="header">
-📊 Index Dashboard (Auto Updated)
+📊 My Rupee Advisor – Index Dashboard (Auto Updated)
 </div>
 
-<div class="tabs">
-  <button id="bseBtn" onclick="loadPDF('bse')">BSE</button>
-  <button id="nseBtn" onclick="loadPDF('nse')">NSE</button>
+<div class="container">
+
+  <div class="tabs">
+    <button id="bseBtn" onclick="loadPDF('bse')">BSE</button>
+    <button id="nseBtn" onclick="loadPDF('nse')">NSE</button>
+  </div>
+
+  <div class="info" id="info">Loading...</div>
+
+  <div class="actions">
+    <button class="btn" onclick="downloadPDF()">⬇ Download PDF</button>
+  </div>
+
+  <iframe id="pdfFrame"></iframe>
+
+  <div class="footer">
+    Data Source: BSE & NSE | For informational purposes only
+  </div>
+
 </div>
-
-<div class="info" id="info">Loading...</div>
-
-<iframe id="pdfFrame"></iframe>
 
 <script>
-const API_BASE = "https://index-dashboard-system.onrender.com/api";
+
+const API = "https://index-dashboard-system.onrender.com/api";
+let currentPDF = "";
 
 function loadPDF(type) {
 
@@ -77,14 +126,19 @@ function loadPDF(type) {
   document.getElementById("nseBtn").classList.remove("active");
   document.getElementById(type + "Btn").classList.add("active");
 
-  fetch(`${API_BASE}/${type}-pdf`)
+  document.getElementById("info").innerText = "Loading...";
+
+  fetch(`${API}/${type}-pdf`)
   .then(res => res.json())
   .then(data => {
 
     if(data.pdf_url){
+      currentPDF = data.pdf_url;
+
       document.getElementById("pdfFrame").src = data.pdf_url;
+
       document.getElementById("info").innerText =
-        `${type.toUpperCase()} Dashboard - ${data.month}`;
+        `${data.source} Dashboard – ${data.month}`;
     } else {
       document.getElementById("info").innerText = "PDF not available";
     }
@@ -92,8 +146,15 @@ function loadPDF(type) {
   });
 }
 
+function downloadPDF(){
+  if(currentPDF){
+    window.open(currentPDF, "_blank");
+  }
+}
+
 // Default load
 loadPDF('bse');
+
 </script>
 
 </body>
