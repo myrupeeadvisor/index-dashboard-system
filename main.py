@@ -57,7 +57,7 @@ def bse():
 
         if download_file(url, "bse.pdf"):
             return {
-                "pdf_url": "https://index-dashboard-system.onrender.com/static/bse.pdf",
+                "pdf_url": "https://index-dashboard-system.onrender-1.com/static/bse.pdf",
                 "month": f"{m} {y}",
                 "source": "BSE"
             }
