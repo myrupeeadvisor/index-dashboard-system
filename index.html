@@ -42,6 +42,7 @@
       background: #e0e0e0;
       border-radius: 30px;
       font-weight: bold;
+      transition: 0.3s;
     }
 
     .tabs button.active {
@@ -63,19 +64,11 @@
       border: 1px solid #ddd;
     }
 
-    .actions {
+    .loader {
       text-align: center;
-      margin-bottom: 10px;
-    }
-
-    .btn {
-      padding: 8px 15px;
-      margin: 5px;
-      border: none;
-      border-radius: 5px;
-      background: #198754;
-      color: white;
-      cursor: pointer;
+      padding: 30px;
+      font-weight: bold;
+      color: #666;
     }
 
     .footer {
@@ -102,7 +95,9 @@
 
   <div class="info" id="info">Loading...</div>
 
-  <iframe id="pdfFrame"></iframe>
+  <div id="loader" class="loader">Fetching latest data...</div>
+
+  <iframe id="pdfFrame" style="display:none;"></iframe>
 
   <div class="footer">
     Data Source: BSE & NSE | For informational purposes only
@@ -113,37 +108,48 @@
 <script>
 
 const API = "https://index-dashboard-system.onrender.com/api";
-let currentPDF = "";
 
 function loadPDF(type) {
 
+  // Tab highlight
   document.getElementById("bseBtn").classList.remove("active");
   document.getElementById("nseBtn").classList.remove("active");
   document.getElementById(type + "Btn").classList.add("active");
 
+  // UI reset
   document.getElementById("info").innerText = "Loading...";
+  document.getElementById("loader").style.display = "block";
+  document.getElementById("pdfFrame").style.display = "none";
 
   fetch(`${API}/${type}-pdf`)
   .then(res => res.json())
   .then(data => {
 
     if(data.pdf_url){
-      currentPDF = data.pdf_url;
-      document.getElementById("pdfFrame").src = data.pdf_url + "#zoom=135";
+
+      // 🔥 IMPORTANT: Zoom applied
+      const pdfURL = data.pdf_url + "#zoom=135";
+
+      document.getElementById("pdfFrame").src = pdfURL;
 
       document.getElementById("info").innerText =
         `${data.source} Dashboard – ${data.month}`;
+
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("pdfFrame").style.display = "block";
+
     } else {
+
       document.getElementById("info").innerText = "PDF not available";
+      document.getElementById("loader").innerText = "No data found";
+
     }
 
+  })
+  .catch(() => {
+    document.getElementById("info").innerText = "Error loading data";
+    document.getElementById("loader").innerText = "Something went wrong";
   });
-}
-
-function downloadPDF(){
-  if(currentPDF){
-    window.open(currentPDF, "_blank");
-  }
 }
 
 // Default load
