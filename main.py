@@ -44,26 +44,49 @@ def download_file(url, filename):
 
 # BSE
 @app.get("/api/bse-pdf")
-def bse():
-    base = "https://www.bseindices.com/Downloads/Equity_Index_Dashboard_"
+def get_bse_pdf():
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    import requests
+
+    base_url = "https://www.bseindices.com/Downloads/Equity_Index_Dashboard_"
+
     today = datetime.today()
 
     for i in range(2):
         dt = today - relativedelta(months=i)
-        m = dt.strftime("%b")
-        y = dt.strftime("%Y")
 
-        url = f"{base}{m}_{y}.pdf"
+        month = dt.strftime("%b")
+        year = dt.strftime("%Y")
 
-        if download_file(url, "bse.pdf"):
-            return {
-                "pdf_url": "https://index-dashboard-system.onrender-1.com/static/bse.pdf",
-                "month": f"{m} {y}",
-                "source": "BSE"
-            }
+        url = f"{base_url}{month}_{year}.pdf"
+
+        try:
+            print("Trying BSE:", url)
+
+            res = requests.get(
+                url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=30
+            )
+
+            # 🔥 IMPORTANT FIX (same logic as NSE)
+            if res.status_code == 200 and res.headers.get("Content-Type") == "application/pdf":
+
+                with open("static/bse.pdf", "wb") as f:
+                    f.write(res.content)
+
+                return {
+                    "pdf_url": "https://index-dashboard-system-1.onrender.com/static/bse.pdf",
+                    "month": f"{month} {year}",
+                    "source": "BSE"
+                }
+
+        except Exception as e:
+            print("BSE error:", e)
+            continue
 
     return {"error": "BSE PDF not available"}
-
 
 # NSE
 @app.get("/api/nse-pdf")
