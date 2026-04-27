@@ -53,28 +53,34 @@ def parse_pdf(pdf_bytes):
 
         lines = all_text.split("\n")
 
-        cleaned_data = []
+        data = []
 
         for line in lines:
-            parts = line.split()
+            if "BSE" in line and "%" in line:
+                parts = line.split()
 
-            # Basic filter (skip small/invalid rows)
-            if len(parts) > 5:
-                cleaned_data.append(parts)
+                try:
+                    row = {
+                        "Index": " ".join(parts[:-11]),
+                        "1M": parts[-11],
+                        "YTD": parts[-10],
+                        "1Yr": parts[-9],
+                        "3Yr": parts[-8],
+                        "5Yr": parts[-7],
+                        "10Yr": parts[-6],
+                        "Risk_1Yr": parts[-5],
+                        "RiskAdj_1Yr": parts[-4],
+                        "PE": parts[-3],
+                        "PB": parts[-2],
+                        "DivYield": parts[-1],
+                    }
 
-        if not cleaned_data:
-            return pd.DataFrame()
+                    data.append(row)
 
-        # Convert into DataFrame (generic columns)
-        max_len = max(len(row) for row in cleaned_data)
+                except:
+                    continue
 
-        for row in cleaned_data:
-            while len(row) < max_len:
-                row.append("")
-
-        columns = [f"Col_{i}" for i in range(max_len)]
-
-        df = pd.DataFrame(cleaned_data, columns=columns)
+        df = pd.DataFrame(data)
 
         return df
 
