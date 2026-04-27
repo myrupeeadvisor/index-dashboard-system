@@ -76,10 +76,16 @@ def get_bse_pdf():
 # 🔵 NSE API
 @app.get("/api/nse-pdf")
 def get_nse_pdf():
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    import requests
+
     base_url = "https://www.niftyindices.com/Index_Dashboard/Index_Dashboard_"
+    headers = {"User-Agent": "Mozilla/5.0"}
+
     today = datetime.today()
 
-    for i in range(2):  # current + previous month
+    for i in range(2):
         dt = today - relativedelta(months=i)
 
         month = dt.strftime("%b").upper()
@@ -87,11 +93,21 @@ def get_nse_pdf():
 
         url = f"{base_url}{month}{year}.pdf"
 
-        if download_and_save(url, "nse.pdf"):
-            return {
-                "pdf_url": "https://index-dashboard-system.onrender.com/static/nse.pdf",
-                "month": f"{month} {year}",
-                "source": "NSE"
-            }
+        try:
+            res = requests.get(url, headers=headers, timeout=20)
+
+            # 🔥 relaxed validation (important)
+            if res.status_code == 200 and len(res.content) > 20000:
+                with open("static/nse.pdf", "wb") as f:
+                    f.write(res.content)
+
+                return {
+                    "pdf_url": "https://index-dashboard-system.onrender.com/static/nse.pdf",
+                    "month": f"{month} {year}",
+                    "source": "NSE"
+                }
+
+        except:
+            continue
 
     return {"error": "PDF not available"}
