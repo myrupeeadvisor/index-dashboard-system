@@ -88,10 +88,10 @@ def get_nse_pdf():
     for i in range(2):
         dt = today - relativedelta(months=i)
 
-        month = dt.strftime("%b").upper()
-        year = dt.strftime("%Y")
+month = dt.strftime("%b").upper()   # MAR
+year = dt.strftime("%Y")            # 2026
 
-        url = f"{base_url}{month}{year}.pdf"
+url = f"{base_url}{month}{year}.pdf"
 
         try:
             res = requests.get(url, headers=headers, timeout=20)
