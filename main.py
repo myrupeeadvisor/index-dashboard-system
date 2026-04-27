@@ -43,21 +43,27 @@ def get_bse_pdf():
 # ✅ SAFE PARSER (NO CRASH)
 def parse_pdf(pdf_bytes):
     try:
-        all_text = ""
+        import re
+
+        text = ""
 
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
             for page in pdf.pages:
-                text = page.extract_text()
-                if text:
-                    all_text += text + "\n"
+                t = page.extract_text()
+                if t:
+                    text += t + "\n"
 
-        lines = all_text.split("\n")
+        lines = text.split("\n")
 
         data = []
 
         for line in lines:
-            if "BSE" in line and "%" in line:
-                parts = line.split()
+            # Identify valid index rows (contain % values multiple times)
+            if line.count("%") >= 5:
+                parts = re.split(r"\s+", line.strip())
+
+                if len(parts) < 12:
+                    continue
 
                 try:
                     row = {
@@ -74,18 +80,15 @@ def parse_pdf(pdf_bytes):
                         "PB": parts[-2],
                         "DivYield": parts[-1],
                     }
-
                     data.append(row)
 
                 except:
                     continue
 
-        df = pd.DataFrame(data)
-
-        return df
+        return pd.DataFrame(data)
 
     except Exception as e:
-        print("Parsing Error:", str(e))
+        print("Final Parser Error:", str(e))
         return pd.DataFrame()
 
 @app.get("/api/bse-data")
