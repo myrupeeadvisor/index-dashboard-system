@@ -1,1 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Index Dashboard</title>
 
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      background: #f5f7fa;
+    }
+
+    .header {
+      background: #0d6efd;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 22px;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin: 15px;
+    }
+
+    .tabs button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      cursor: pointer;
+      background: #ddd;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .tabs button.active {
+      background: #0d6efd;
+      color: white;
+    }
+
+    .info {
+      text-align: center;
+      margin: 10px;
+      font-weight: bold;
+    }
+
+    iframe {
+      width: 100%;
+      height: 80vh;
+      border: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">
+📊 Index Dashboard (Auto Updated)
+</div>
+
+<div class="tabs">
+  <button id="bseBtn" onclick="loadPDF('bse')">BSE</button>
+  <button id="nseBtn" onclick="loadPDF('nse')">NSE</button>
+</div>
+
+<div class="info" id="info">Loading...</div>
+
+<iframe id="pdfFrame"></iframe>
+
+<script>
+const API_BASE = "https://index-dashboard-system.onrender.com/api";
+
+function loadPDF(type) {
+
+  document.getElementById("bseBtn").classList.remove("active");
+  document.getElementById("nseBtn").classList.remove("active");
+  document.getElementById(type + "Btn").classList.add("active");
+
+  fetch(`${API_BASE}/${type}-pdf`)
+  .then(res => res.json())
+  .then(data => {
+
+    if(data.pdf_url){
+      document.getElementById("pdfFrame").src = data.pdf_url;
+      document.getElementById("info").innerText =
+        `${type.toUpperCase()} Dashboard - ${data.month}`;
+    } else {
+      document.getElementById("info").innerText = "PDF not available";
+    }
+
+  });
+}
+
+// Default load
+loadPDF('bse');
+</script>
+
+</body>
+</html>
