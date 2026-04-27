@@ -1,6 +1,4 @@
 fastapi
 uvicorn
 requests
-pdfplumber
 python-dateutil
-pandas
