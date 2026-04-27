@@ -133,7 +133,7 @@ function loadPDF(type) {
 
     if(data.pdf_url){
       currentPDF = data.pdf_url;
-      document.getElementById("pdfFrame").src = data.pdf_url;
+      document.getElementById("pdfFrame").src = data.pdf_url + "#zoom=135";
 
       document.getElementById("info").innerText =
         `${data.source} Dashboard – ${data.month}`;
