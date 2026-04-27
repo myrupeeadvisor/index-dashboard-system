@@ -16,6 +16,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def home():
+    return {"message": "API is running successfully"}
+
+# ✅ SAFE PDF FETCH
 def get_bse_pdf():
     today = datetime.today()
 
@@ -27,45 +32,66 @@ def get_bse_pdf():
         url = f"https://www.bseindices.com/Downloads/Equity_Index_Dashboard_{month}_{year}.pdf"
 
         try:
-            res = requests.get(url)
+            res = requests.get(url, timeout=10)
             if res.status_code == 200:
                 return res.content, url
         except:
-            pass
+            continue
 
     return None, None
 
+# ✅ SAFE PARSER (NO CRASH)
 def parse_pdf(pdf_bytes):
-    rows = []
-    headers = None
+    try:
+        rows = []
+        headers = None
 
-    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-        for page in pdf.pages:
-            table = page.extract_table()
-            if table:
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            for page in pdf.pages:
+                table = page.extract_table()
+
+                if not table or len(table) < 2:
+                    continue
+
                 if not headers:
                     headers = table[0]
                     for row in table[1:]:
-                        rows.append(row)
+                        if len(row) == len(headers):
+                            rows.append(row)
                 else:
                     for row in table:
-                        rows.append(row)
+                        if len(row) == len(headers):
+                            rows.append(row)
 
-    df = pd.DataFrame(rows, columns=headers)
-    return df.fillna("")
+        if not rows or not headers:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(rows, columns=headers)
+        return df.fillna("")
+
+    except Exception as e:
+        print("Parsing Error:", str(e))
+        return pd.DataFrame()
 
 @app.get("/api/bse-data")
 def bse_data():
-    pdf, source = get_bse_pdf()
+    try:
+        pdf, source = get_bse_pdf()
 
-    if not pdf:
-        return {"error": "Data not available"}
+        if not pdf:
+            return {"error": "PDF not found"}
 
-    df = parse_pdf(pdf)
+        df = parse_pdf(pdf)
 
-    return {
-        "source": source,
-        "last_updated": str(datetime.now()),
-        "columns": list(df.columns),
-        "data": df.to_dict(orient="records")
-    }
+        if df.empty:
+            return {"error": "No table data extracted"}
+
+        return {
+            "source": source,
+            "last_updated": str(datetime.now()),
+            "columns": list(df.columns),
+            "data": df.to_dict(orient="records")
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
